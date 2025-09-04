@@ -24,11 +24,29 @@ $current_theme = getCurrentTheme($pdo);
 
 $message = '';
 try {
-    $stmt = $pdo->query("SELECT id, title, SUBSTRING(content, 1, 150) as snippet, created_at FROM texts ORDER BY created_at DESC");
-    $texts = $stmt->fetchAll();
+    // This query is more complex because we need to get the latest revision for each article to show a snippet.
+    $sql = "
+        SELECT
+            a.id,
+            a.title,
+            a.created_at,
+            SUBSTRING(r.content, 1, 150) AS snippet
+        FROM
+            articles AS a
+        INNER JOIN
+            revisions AS r ON r.id = (
+                SELECT MAX(id)
+                FROM revisions
+                WHERE article_id = a.id
+            )
+        ORDER BY
+            a.created_at DESC
+    ";
+    $stmt = $pdo->query($sql);
+    $articles = $stmt->fetchAll();
 } catch (PDOException $e) {
-    $texts = [];
-    $message = '<div class="message error">Could not fetch texts: ' . $e->getMessage() . '</div>';
+    $articles = [];
+    $message = '<div class="message error">Could not fetch articles: ' . $e->getMessage() . '</div>';
 }
 ?>
 
@@ -66,21 +84,21 @@ try {
     <div class="container">
         <h1>Student Dashboard</h1>
 
-        <p>This is your personal study area. Below is a list of available texts.</p>
+        <p>This is your personal study area. Below is a list of available articles.</p>
 
-        <h2>Available Texts</h2>
+        <h2>Available Articles</h2>
 
         <?php echo $message; ?>
 
         <div class="text-list">
-            <?php if (empty($texts)): ?>
-                <p>No texts are available at the moment. Please check back later.</p>
+            <?php if (empty($articles)): ?>
+                <p>No articles are available at the moment. Please check back later.</p>
             <?php else: ?>
-                <?php foreach ($texts as $text): ?>
+                <?php foreach ($articles as $article): ?>
                     <div class="text-list-item">
-                        <h3><?php echo htmlspecialchars($text['title']); ?></h3>
-                        <p><?php echo htmlspecialchars($text['snippet']); ?>...</p>
-                        <a href="view_text.php?id=<?php echo $text['id']; ?>">Read More</a>
+                        <h3><?php echo htmlspecialchars($article['title']); ?></h3>
+                        <p><?php echo htmlspecialchars($article['snippet']); ?>...</p>
+                        <a href="view_article.php?id=<?php echo $article['id']; ?>">Read More</a>
                     </div>
                 <?php endforeach; ?>
             <?php endif; ?>

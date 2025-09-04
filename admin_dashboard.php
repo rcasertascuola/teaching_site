@@ -25,7 +25,7 @@ $current_theme = getCurrentTheme($pdo);
 
 $message = '';
 
-// Handle form submission for adding a new text
+// Handle form submission for adding a new article
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_text'])) {
     $title = trim($_POST['title']);
     $content = trim($_POST['content']);
@@ -33,26 +33,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_text'])) {
     if (empty($title) || empty($content)) {
         $message = '<div class="message error">Title and content cannot be empty.</div>';
     } else {
+        $pdo->beginTransaction();
         try {
-            $stmt = $pdo->prepare("INSERT INTO texts (title, content, author_id) VALUES (?, ?, ?)");
-            if ($stmt->execute([$title, $content, $user_id])) {
-                $message = '<div class="message success">Text added successfully!</div>';
-            } else {
-                $message = '<div class="message error">Failed to add text. Please try again.</div>';
-            }
+            // Step 1: Insert into articles table
+            $stmt = $pdo->prepare("INSERT INTO articles (title, creator_id) VALUES (?, ?)");
+            $stmt->execute([$title, $user_id]);
+            $article_id = $pdo->lastInsertId();
+
+            // Step 2: Insert the first revision
+            $stmt = $pdo->prepare("INSERT INTO revisions (article_id, editor_id, content, edit_summary) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$article_id, $user_id, $content, 'Initial creation']);
+
+            $pdo->commit();
+            $message = '<div class="message success">Article added successfully!</div>';
+
         } catch (PDOException $e) {
+            $pdo->rollBack();
             $message = '<div class="message error">Database error: ' . $e->getMessage() . '</div>';
         }
     }
 }
 
-// Fetch all texts from the database
+// Fetch all articles from the database
 try {
-    $stmt = $pdo->query("SELECT id, title, created_at FROM texts ORDER BY created_at DESC");
-    $texts = $stmt->fetchAll();
+    $stmt = $pdo->query("SELECT id, title, created_at FROM articles ORDER BY created_at DESC");
+    $articles = $stmt->fetchAll();
 } catch (PDOException $e) {
-    $texts = [];
-    $message .= '<div class="message error">Could not fetch texts: ' . $e->getMessage() . '</div>';
+    $articles = [];
+    $message .= '<div class="message error">Could not fetch articles: ' . $e->getMessage() . '</div>';
 }
 ?>
 
@@ -81,6 +89,7 @@ try {
         }
         .btn-edit { background-color: #ffc107; }
         .btn-delete { background-color: #dc3545; }
+        .btn-history { background-color: #17a2b8; }
     </style>
 </head>
 <body>
@@ -114,7 +123,7 @@ try {
         ?>
 
         <div class="form-container">
-            <h2>Add New Text</h2>
+            <h2>Add New Article</h2>
             <form action="admin_dashboard.php" method="POST">
                 <input type="hidden" name="add_text" value="1">
                 <div class="form-group">
@@ -125,27 +134,28 @@ try {
                     <label for="content">Content</label>
                     <textarea id="content" name="content" required></textarea>
                 </div>
-                <button type="submit" name="add_text">Add Text</button>
+                <button type="submit" name="add_text">Add Article</button>
             </form>
         </div>
 
         <hr>
 
-        <h2>Existing Texts</h2>
+        <h2>Existing Articles</h2>
         <div class="text-list-container">
-            <?php if (empty($texts)): ?>
-                <p>No texts have been added yet.</p>
+            <?php if (empty($articles)): ?>
+                <p>No articles have been added yet.</p>
             <?php else: ?>
                 <ul class="text-list">
-                    <?php foreach ($texts as $text): ?>
+                    <?php foreach ($articles as $article): ?>
                         <li>
                             <div class="text-info">
-                                <a href="view_text.php?id=<?php echo $text['id']; ?>"><?php echo htmlspecialchars($text['title']); ?></a>
-                                <small>Added: <?php echo date('Y-m-d', strtotime($text['created_at'])); ?></small>
+                                <a href="view_article.php?id=<?php echo $article['id']; ?>"><?php echo htmlspecialchars($article['title']); ?></a>
+                                <small>Added: <?php echo date('Y-m-d', strtotime($article['created_at'])); ?></small>
                             </div>
                             <div class="text-actions">
-                                <a href="edit_text.php?id=<?php echo $text['id']; ?>" class="btn-edit">Edit</a>
-                                <a href="delete_text.php?id=<?php echo $text['id']; ?>" class="btn-delete" onclick="return confirm('Are you sure you want to delete this text?');">Delete</a>
+                                <a href="history.php?id=<?php echo $article['id']; ?>" class="btn-history" style="background-color: #17a2b8; color: white;">History</a>
+                                <a href="edit_article.php?id=<?php echo $article['id']; ?>" class="btn-edit">Edit</a>
+                                <a href="delete_article.php?id=<?php echo $article['id']; ?>" class="btn-delete" onclick="return confirm('Are you sure you want to delete this article?');">Delete</a>
                             </div>
                         </li>
                     <?php endforeach; ?>

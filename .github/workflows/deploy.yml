@@ -31,4 +31,4 @@ jobs:
         password: ${{ secrets.FTP_PASSWORD }}
         # Cartella sul server dove caricare i file (es. public_html/)
         # Lasciare vuoto per la cartella principale
-        server-dir: public_html/
+        server-dir: /

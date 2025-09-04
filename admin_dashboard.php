@@ -66,30 +66,52 @@ try {
     <style>
         .theme-switcher { display: flex; align-items: center; }
         .theme-switcher select { margin: 0 0.5rem; padding: 0.25rem 0.5rem; }
-        .theme-switcher button { padding: 0.25rem 0.75rem; font-size: 0.8rem; }
+        .navbar-right { display: flex; align-items: center; gap: 1rem; }
+        .text-list li { display: flex; justify-content: space-between; align-items: center; }
+        .text-info a { font-weight: bold; }
+        .text-info small { display: block; color: #6c757d; }
+        .text-actions a {
+            display: inline-block;
+            padding: 0.35rem 0.75rem;
+            border-radius: 4px;
+            text-decoration: none;
+            color: white;
+            font-size: 0.9rem;
+            margin-left: 0.5rem;
+        }
+        .btn-edit { background-color: #ffc107; }
+        .btn-delete { background-color: #dc3545; }
     </style>
 </head>
 <body>
     <div class="navbar">
         <span>Welcome, <?php echo $username; ?>! (Teacher)</span>
-        <div>
+        <div class="navbar-right">
             <form action="includes/theme_manager.php" method="POST" class="theme-switcher">
                 <input type="hidden" name="redirect_url" value="admin_dashboard.php">
                 <input type="hidden" name="change_theme" value="1">
-                <select name="theme">
+                <select name="theme" onchange="this.form.submit()">
                     <option value="light" <?php echo ($current_theme === 'light') ? 'selected' : ''; ?>>Light</option>
                     <option value="dark" <?php echo ($current_theme === 'dark') ? 'selected' : ''; ?>>Dark</option>
                 </select>
-                <button type="submit">Set</button>
             </form>
+            <a href="manage_users.php">Manage Users</a>
+            <a href="profile.php">Profile</a>
+            <a href="logout.php">Logout</a>
         </div>
-        <a href="logout.php">Logout</a>
     </div>
 
     <div class="container">
         <h1>Teacher Dashboard</h1>
 
-        <?php echo $message; ?>
+        <?php
+        // Display session messages if they exist
+        if (isset($_SESSION['message'])) {
+            echo $_SESSION['message'];
+            unset($_SESSION['message']); // Clear the message after displaying it
+        }
+        echo $message; // Display messages from form submissions on this page
+        ?>
 
         <div class="form-container">
             <h2>Add New Text</h2>
@@ -117,8 +139,14 @@ try {
                 <ul class="text-list">
                     <?php foreach ($texts as $text): ?>
                         <li>
-                            <span><a href="view_text.php?id=<?php echo $text['id']; ?>"><?php echo htmlspecialchars($text['title']); ?></a></span>
-                            <small>Added: <?php echo date('Y-m-d', strtotime($text['created_at'])); ?></small>
+                            <div class="text-info">
+                                <a href="view_text.php?id=<?php echo $text['id']; ?>"><?php echo htmlspecialchars($text['title']); ?></a>
+                                <small>Added: <?php echo date('Y-m-d', strtotime($text['created_at'])); ?></small>
+                            </div>
+                            <div class="text-actions">
+                                <a href="edit_text.php?id=<?php echo $text['id']; ?>" class="btn-edit">Edit</a>
+                                <a href="delete_text.php?id=<?php echo $text['id']; ?>" class="btn-delete" onclick="return confirm('Are you sure you want to delete this text?');">Delete</a>
+                            </div>
                         </li>
                     <?php endforeach; ?>
                 </ul>

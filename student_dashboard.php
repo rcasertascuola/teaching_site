@@ -43,24 +43,24 @@ try {
         /* Small style for the theme switcher form */
         .theme-switcher { display: flex; align-items: center; }
         .theme-switcher select { margin-right: 0.5rem; padding: 0.25rem 0.5rem; }
-        .theme-switcher button { padding: 0.25rem 0.75rem; font-size: 0.8rem; }
+        .navbar-right { display: flex; align-items: center; gap: 1rem; }
     </style>
 </head>
 <body>
     <div class="navbar">
         <span>Welcome, <?php echo $username; ?>! (Student)</span>
-        <div>
+        <div class="navbar-right">
             <form action="includes/theme_manager.php" method="POST" class="theme-switcher">
                 <input type="hidden" name="redirect_url" value="student_dashboard.php">
                 <input type="hidden" name="change_theme" value="1">
-                <select name="theme">
+                <select name="theme" onchange="this.form.submit()">
                     <option value="light" <?php echo ($current_theme === 'light') ? 'selected' : ''; ?>>Light</option>
                     <option value="dark" <?php echo ($current_theme === 'dark') ? 'selected' : ''; ?>>Dark</option>
                 </select>
-                <button type="submit">Set</button>
             </form>
+            <a href="profile.php">Profile</a>
+            <a href="logout.php">Logout</a>
         </div>
-        <a href="logout.php">Logout</a>
     </div>
 
     <div class="container">

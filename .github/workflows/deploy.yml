@@ -1,0 +1,34 @@
+# Nome del workflow che vedrai nella scheda "Actions"
+name: Deploy to FTP
+
+# Quando deve partire questo workflow?
+on:
+  # In questo caso, ogni volta che fai un "push" sul ramo "main"
+  push:
+    branches:
+      - initial-learning-platform
+
+# Cosa deve fare il workflow?
+jobs:
+  ftp-deploy:
+    name: Deploy
+    # Usa una macchina virtuale con Ubuntu per eseguire i comandi
+    runs-on: ubuntu-latest
+    steps:
+    # 1. Scarica il codice del tuo repository sulla macchina virtuale
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # 2. Esegui l'azione di deploy FTP
+    - name: FTP Deploy
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      with:
+        # Indirizzo del server (preso dai Secrets)
+        server: ${{ secrets.FTP_SERVER }}
+        # Nome utente (preso dai Secrets)
+        username: ${{ secrets.FTP_USERNAME }}
+        # Password (presa dai Secrets)
+        password: ${{ secrets.FTP_PASSWORD }}
+        # Cartella sul server dove caricare i file (es. public_html/)
+        # Lasciare vuoto per la cartella principale
+        server-dir: public_html/

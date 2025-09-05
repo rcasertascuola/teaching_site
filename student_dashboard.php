@@ -20,33 +20,39 @@ require_once 'includes/theme_manager.php';
 
 // --- Data Fetching ---
 $username = htmlspecialchars($_SESSION['username']);
+$user_id = $_SESSION['user_id'];
 $current_theme = getCurrentTheme($pdo);
 
 $message = '';
 try {
-    // This query is more complex because we need to get the latest revision for each article to show a snippet.
-    $sql = "
+    // Fetch articles
+    $sql_articles = "
+        SELECT a.id, a.title, a.created_at, SUBSTRING(r.content, 1, 150) AS snippet
+        FROM articles AS a
+        INNER JOIN revisions AS r ON r.id = (
+            SELECT MAX(id) FROM revisions WHERE article_id = a.id
+        )
+        ORDER BY a.created_at DESC";
+    $stmt_articles = $pdo->query($sql_articles);
+    $articles = $stmt_articles->fetchAll();
+
+    // Fetch exercises and check for submissions
+    $sql_exercises = "
         SELECT
-            a.id,
-            a.title,
-            a.created_at,
-            SUBSTRING(r.content, 1, 150) AS snippet
-        FROM
-            articles AS a
-        INNER JOIN
-            revisions AS r ON r.id = (
-                SELECT MAX(id)
-                FROM revisions
-                WHERE article_id = a.id
-            )
-        ORDER BY
-            a.created_at DESC
-    ";
-    $stmt = $pdo->query($sql);
-    $articles = $stmt->fetchAll();
+            e.id,
+            e.title,
+            e.created_at,
+            (SELECT COUNT(*) FROM student_submissions WHERE exercise_id = e.id AND student_id = :user_id) AS submission_count
+        FROM exercises AS e
+        ORDER BY e.created_at DESC";
+    $stmt_exercises = $pdo->prepare($sql_exercises);
+    $stmt_exercises->execute(['user_id' => $user_id]);
+    $exercises = $stmt_exercises->fetchAll();
+
 } catch (PDOException $e) {
     $articles = [];
-    $message = '<div class="message error">Could not fetch articles: ' . $e->getMessage() . '</div>';
+    $exercises = [];
+    $message = '<div class="message error">Could not fetch data: ' . $e->getMessage() . '</div>';
 }
 ?>
 
@@ -103,6 +109,28 @@ try {
                 <?php endforeach; ?>
             <?php endif; ?>
         </div>
+
+        <hr>
+
+        <h2>Available Exercises</h2>
+        <div class="text-list">
+            <?php if (empty($exercises)): ?>
+                <p>No exercises are available at the moment.</p>
+            <?php else: ?>
+                <?php foreach ($exercises as $exercise): ?>
+                    <div class="text-list-item">
+                        <h3><?php echo htmlspecialchars($exercise['title']); ?></h3>
+                        <p>Created on: <?php echo date('Y-m-d', strtotime($exercise['created_at'])); ?></p>
+                        <?php if ($exercise['submission_count'] > 0): ?>
+                            <a href="view_submission.php?exercise_id=<?php echo $exercise['id']; ?>" class="button-submitted">View Submission</a>
+                        <?php else: ?>
+                            <a href="view_exercise.php?id=<?php echo $exercise['id']; ?>">Start Exercise</a>
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+
     </div>
 </body>
 </html>

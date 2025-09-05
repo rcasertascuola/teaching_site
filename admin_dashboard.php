@@ -139,7 +139,7 @@ try {
 
         <div class="features-menu">
             <a href="admin_dashboard.php" class="active">Articoli</a>
-            <a href="#" class="disabled" title="Prossimamente">Esercizi</a>
+            <a href="manage_exercises.php">Esercizi</a>
             <a href="#" class="disabled" title="Prossimamente">Obiettivi formativi</a>
             <a href="#" class="disabled" title="Prossimamente">Riscontro alunni</a>
             <a href="#" class="disabled" title="Prossimamente">Valutazioni</a>

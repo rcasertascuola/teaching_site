@@ -67,8 +67,8 @@ if (!$article_id || $article_id <= 0) {
         .theme-switcher { display: flex; align-items: center; }
         .theme-switcher select { margin: 0 0.5rem; padding: 0.25rem 0.5rem; }
         .theme-switcher button { padding: 0.25rem 0.75rem; font-size: 0.8rem; }
-        .content-body { line-height: 1.6; white-space: pre-wrap; }
-        .back-link { display: inline-block; margin-bottom: 1rem; }
+        .content-body { /* line-height: 1.6; white-space: pre-wrap; */ }
+        .back-link { display: inline-block; margin-bottom: 2rem; }
         .error { color: #721c24; background-color: #f8d7da; padding: 1rem; border-radius: 4px; }
         .meta-info { font-size: 0.9em; color: #6c757d; margin-bottom: 1rem; border-bottom: 1px solid #dee2e6; padding-bottom: 0.5rem; }
     </style>

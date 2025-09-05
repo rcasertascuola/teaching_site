@@ -19,7 +19,7 @@ $users = [];
 
 // Fetch all student users from the database
 try {
-    $stmt = $pdo->query("SELECT id, username, email, created_at FROM users WHERE role = 'student' ORDER BY created_at DESC");
+    $stmt = $pdo->query("SELECT id, username, email, classe, anno_scolastico, created_at FROM users WHERE role = 'student' ORDER BY created_at DESC");
     $users = $stmt->fetchAll();
 } catch (PDOException $e) {
     $message = '<div class="message error">Could not fetch users: ' . $e->getMessage() . '</div>';
@@ -59,13 +59,15 @@ try {
                         <th>ID</th>
                         <th>Username</th>
                         <th>Email</th>
+                        <th>Class</th>
+                        <th>School Year</th>
                         <th>Registered On</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($users)): ?>
                         <tr>
-                            <td colspan="4">No student users found.</td>
+                            <td colspan="6">No student users found.</td>
                         </tr>
                     <?php else: ?>
                         <?php foreach ($users as $user): ?>
@@ -73,6 +75,8 @@ try {
                                 <td><?php echo htmlspecialchars($user['id']); ?></td>
                                 <td><?php echo htmlspecialchars($user['username']); ?></td>
                                 <td><?php echo htmlspecialchars($user['email']); ?></td>
+                                <td><?php echo htmlspecialchars($user['classe'] ?? 'N/A'); ?></td>
+                                <td><?php echo htmlspecialchars($user['anno_scolastico'] ?? 'N/A'); ?></td>
                                 <td><?php echo date('Y-m-d', strtotime($user['created_at'])); ?></td>
                             </tr>
                         <?php endforeach; ?>

@@ -53,9 +53,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 "INSERT INTO submission_answers (submission_id, question_id, selected_option_id, open_ended_answer) VALUES (?, ?, ?, ?)"
             );
 
-            if (is_array($answer)) { // Checkbox for multiple options
-                foreach($answer as $option_id) {
-                    $stmt_insert->execute([$submission_id, $question_id, $option_id, null]);
+            if (is_array($answer)) {
+                // Check if it's an associative array (cloze test) or a simple array (multiple response)
+                if (array_keys($answer) !== range(0, count($answer) - 1)) {
+                    // Cloze test answers, store as JSON
+                    $cloze_answer_json = json_encode($answer);
+                    $stmt_insert->execute([$submission_id, $question_id, null, $cloze_answer_json]);
+                } else {
+                    // Multiple response answers
+                    foreach($answer as $option_id) {
+                        $stmt_insert->execute([$submission_id, $question_id, $option_id, null]);
+                    }
                 }
             } elseif (is_numeric($answer)) { // Radio button for single option
                  $stmt_insert->execute([$submission_id, $question_id, $answer, null]);
@@ -88,15 +96,14 @@ try {
     $questions = $stmt_q->fetchAll();
 
     $stmt_o = $pdo->prepare("SELECT * FROM question_options WHERE question_id = ?");
-    $stmt_c = $pdo->prepare("SELECT COUNT(*) FROM question_options WHERE question_id = ? AND score > 0");
 
     foreach ($questions as $key => $q) {
-        if ($q['question_type'] === 'multiple_choice') {
+        if ($q['question_type'] === 'multiple_choice' || $q['question_type'] === 'multiple_response') {
             $stmt_o->execute([$q['id']]);
             $questions[$key]['options'] = $stmt_o->fetchAll();
-
-            $stmt_c->execute([$q['id']]);
-            $questions[$key]['correct_answers_count'] = $stmt_c->fetchColumn();
+        }
+        if ($q['question_type'] === 'cloze_test' && $q['cloze_data']) {
+            $questions[$key]['cloze_data'] = json_decode($q['cloze_data'], true);
         }
     }
 } catch (Exception $e) {
@@ -133,14 +140,14 @@ try {
         <form action="view_exercise.php?id=<?php echo $exercise_id; ?>" method="POST">
             <?php foreach ($questions as $question): ?>
                 <div class="question">
-                    <p><?php echo htmlspecialchars($question['question_order']) . '. ' . htmlspecialchars($question['question_text']); ?></p>
+                    <p><strong><?php echo htmlspecialchars($question['question_order']) . '. ' . htmlspecialchars($question['question_text']); ?></strong> (<?php echo $question['points']; ?> points)</p>
 
-                    <?php if ($question['question_type'] === 'multiple_choice'): ?>
+                    <?php if ($question['question_type'] === 'multiple_choice' || $question['question_type'] === 'multiple_response'): ?>
                         <ul class="options-list">
                             <?php foreach ($question['options'] as $option): ?>
                                 <li>
                                     <label>
-                                        <?php if ($question['correct_answers_count'] > 1): ?>
+                                        <?php if ($question['question_type'] === 'multiple_response'): ?>
                                             <input type="checkbox" name="answers[<?php echo $question['id']; ?>][]" value="<?php echo $option['id']; ?>">
                                         <?php else: ?>
                                             <input type="radio" name="answers[<?php echo $question['id']; ?>]" value="<?php echo $option['id']; ?>" required>
@@ -151,7 +158,27 @@ try {
                             <?php endforeach; ?>
                         </ul>
                     <?php elseif ($question['question_type'] === 'open_ended'): ?>
-                        <textarea name="answers[<?php echo $question['id']; ?>]" rows="5" style="width: 100%;" required></textarea>
+                        <textarea name="answers[<?php echo $question['id']; ?>]" rows="5" style="width: 100%;"
+                                  <?php if ($question['char_limit']) echo 'maxlength="' . $question['char_limit'] . '"'; ?>
+                                  required></textarea>
+                        <?php if ($question['char_limit']): ?>
+                            <small>Max characters: <?php echo $question['char_limit']; ?></small>
+                        <?php endif; ?>
+
+                    <?php elseif ($question['question_type'] === 'cloze_test'): ?>
+                        <div class="cloze-word-list">
+                            <strong>Word List:</strong> <?php echo implode(', ', array_map('htmlspecialchars', $question['cloze_data']['word_list'])); ?>
+                        </div>
+                        <div class="cloze-inputs">
+                            <?php
+                            $num_blanks = count($question['cloze_data']['solution']);
+                            for ($i = 1; $i <= $num_blanks; $i++): ?>
+                                <div class="form-group">
+                                    <label for="cloze_<?php echo $question['id']; ?>_<?php echo $i; ?>">Blank [<?php echo $i; ?>]:</label>
+                                    <input type="text" id="cloze_<?php echo $question['id']; ?>_<?php echo $i; ?>" name="answers[<?php echo $question['id']; ?>][<?php echo $i; ?>]" required>
+                                </div>
+                            <?php endfor; ?>
+                        </div>
                     <?php endif; ?>
                 </div>
             <?php endforeach; ?>

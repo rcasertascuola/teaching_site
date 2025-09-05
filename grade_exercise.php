@@ -60,37 +60,48 @@ try {
     $exercise_id = $submission_info['exercise_id'];
 
     // Get all questions for the exercise
-    $sql_q = "SELECT id, question_text, question_type, question_order FROM questions WHERE exercise_id = ? ORDER BY question_order ASC";
+    $sql_q = "SELECT * FROM questions WHERE exercise_id = ? ORDER BY question_order ASC";
     $stmt_q = $pdo->prepare($sql_q);
     $stmt_q->execute([$exercise_id]);
     $questions = $stmt_q->fetchAll(PDO::FETCH_ASSOC);
 
-    // For each question, get the student's answer(s) and the options
+    // For each question, get the student's answer(s) and related data
     foreach ($questions as $key => $q) {
-        // Get student's answer(s)
         $sql_a = "SELECT * FROM submission_answers WHERE submission_id = ? AND question_id = ?";
         $stmt_a = $pdo->prepare($sql_a);
         $stmt_a->execute([$submission_id, $q['id']]);
-        $questions[$key]['student_answers'] = $stmt_a->fetchAll(PDO::FETCH_ASSOC);
+        $student_answers = $stmt_a->fetchAll(PDO::FETCH_ASSOC);
+        $questions[$key]['student_answers'] = $student_answers;
 
-        // If multiple choice, get all options and pre-calculate auto score
-        if ($q['question_type'] == 'multiple_choice') {
+        $auto_score = 0;
+
+        if ($q['question_type'] == 'multiple_choice' || $q['question_type'] == 'multiple_response') {
             $sql_o = "SELECT * FROM question_options WHERE question_id = ?";
             $stmt_o = $pdo->prepare($sql_o);
             $stmt_o->execute([$q['id']]);
             $options = $stmt_o->fetchAll(PDO::FETCH_ASSOC);
             $questions[$key]['options'] = $options;
 
-            // Calculate auto score
-            $auto_score = 0;
-            $selected_option_ids = array_column($questions[$key]['student_answers'], 'selected_option_id');
+            $selected_option_ids = array_column($student_answers, 'selected_option_id');
             foreach($options as $option) {
                 if (in_array($option['id'], $selected_option_ids)) {
                     $auto_score += $option['score'];
                 }
             }
-            $questions[$key]['auto_score'] = $auto_score;
+        } elseif ($q['question_type'] == 'cloze_test') {
+            $cloze_data = json_decode($q['cloze_data'], true);
+            $student_cloze_answers = json_decode($student_answers[0]['open_ended_answer'], true);
+            $questions[$key]['cloze_data'] = $cloze_data;
+            $questions[$key]['student_cloze_answers'] = $student_cloze_answers;
+
+            $points_per_blank = $q['points'] / count($cloze_data['solution']);
+            foreach($cloze_data['solution'] as $blank_num => $correct_word) {
+                if (isset($student_cloze_answers[$blank_num]) && strcasecmp(trim($student_cloze_answers[$blank_num]), trim($correct_word)) == 0) {
+                    $auto_score += $points_per_blank;
+                }
+            }
         }
+        $questions[$key]['auto_score'] = $auto_score;
     }
 
 } catch (Exception $e) {
@@ -132,7 +143,7 @@ try {
                     <h4><?php echo $q['question_order']; ?>. <?php echo htmlspecialchars($q['question_text']); ?></h4>
                     <div class="student-answer">
                         <strong>Student's Answer:</strong>
-                        <?php if ($q['question_type'] == 'multiple_choice'): ?>
+                        <?php if ($q['question_type'] == 'multiple_choice' || $q['question_type'] == 'multiple_response'): ?>
                             <ul>
                             <?php
                             $selected_ids = array_column($q['student_answers'], 'selected_option_id');
@@ -144,15 +155,29 @@ try {
                                 }
                             ?>
                                 <li class="option-item <?php echo $class; ?>">
-                                    <?php echo htmlspecialchars($opt['option_text']); ?> (Score: <?php echo $opt['score']; ?>)
+                                    <?php echo htmlspecialchars($opt['option_text']); ?> (Points for this option: <?php echo $opt['score']; ?>)
                                 </li>
                             <?php endforeach; ?>
                             </ul>
-                            <p><strong>Auto-calculated Score:</strong> <?php echo $q['auto_score']; ?></p>
+                        <?php elseif ($q['question_type'] == 'cloze_test'): ?>
+                            <ul>
+                                <?php foreach($q['cloze_data']['solution'] as $blank_num => $correct_word):
+                                    $student_word = $q['student_cloze_answers'][$blank_num] ?? '[No Answer]';
+                                    $is_correct = (strcasecmp(trim($student_word), trim($correct_word)) == 0);
+                                ?>
+                                    <li class="<?php echo $is_correct ? 'correct' : 'incorrect'; ?>">
+                                        Blank [<?php echo $blank_num; ?>]:
+                                        Student wrote "<?php echo htmlspecialchars($student_word); ?>".
+                                        Correct answer was "<?php echo htmlspecialchars($correct_word); ?>".
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
                         <?php else: // open_ended ?>
                             <p><?php echo nl2br(htmlspecialchars($q['student_answers'][0]['open_ended_answer'])); ?></p>
                         <?php endif; ?>
                     </div>
+
+                    <p><strong>Auto-calculated Score:</strong> <?php echo number_format($q['auto_score'], 2); ?></p>
 
                     <div class="form-group">
                         <label for="grade-<?php echo $q['student_answers'][0]['id']; ?>"><strong>Assigned Score:</strong></label>

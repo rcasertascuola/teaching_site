@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS `exercises` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `title` VARCHAR(255) NOT NULL,
     `creator_id` INT NOT NULL,
+    `content` TEXT,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`creator_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
@@ -76,8 +77,11 @@ CREATE TABLE IF NOT EXISTS `questions` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `exercise_id` INT NOT NULL,
     `question_text` TEXT NOT NULL,
-    `question_type` ENUM('multiple_choice', 'open_ended') NOT NULL,
+    `question_type` ENUM('multiple_choice', 'multiple_response', 'open_ended', 'cloze_test') NOT NULL,
     `question_order` INT NOT NULL,
+    `points` DECIMAL(5, 2) NOT NULL DEFAULT 0.00,
+    `char_limit` INT DEFAULT NULL,
+    `cloze_data` JSON DEFAULT NULL,
     FOREIGN KEY (`exercise_id`) REFERENCES `exercises`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

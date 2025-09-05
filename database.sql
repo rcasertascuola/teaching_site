@@ -46,3 +46,74 @@ CREATE TABLE IF NOT EXISTS `user_preferences` (
     `theme` VARCHAR(50) NOT NULL DEFAULT 'light',
     FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- SECTION: Exercises --
+
+-- Table: exercises
+-- Stores the main information about an exercise.
+CREATE TABLE IF NOT EXISTS `exercises` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `title` VARCHAR(255) NOT NULL,
+    `creator_id` INT NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`creator_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Table: exercise_articles
+-- Links exercises to their prerequisite articles (many-to-many).
+CREATE TABLE IF NOT EXISTS `exercise_articles` (
+    `exercise_id` INT NOT NULL,
+    `article_id` INT NOT NULL,
+    PRIMARY KEY (`exercise_id`, `article_id`),
+    FOREIGN KEY (`exercise_id`) REFERENCES `exercises`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`article_id`) REFERENCES `articles`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Table: questions
+-- Stores individual questions within an exercise.
+CREATE TABLE IF NOT EXISTS `questions` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `exercise_id` INT NOT NULL,
+    `question_text` TEXT NOT NULL,
+    `question_type` ENUM('multiple_choice', 'open_ended') NOT NULL,
+    `question_order` INT NOT NULL,
+    FOREIGN KEY (`exercise_id`) REFERENCES `exercises`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Table: question_options
+-- Stores the options for a multiple-choice question.
+CREATE TABLE IF NOT EXISTS `question_options` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `question_id` INT NOT NULL,
+    `option_text` TEXT NOT NULL,
+    `score` DECIMAL(5, 2) NOT NULL DEFAULT 0.00,
+    FOREIGN KEY (`question_id`) REFERENCES `questions`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Table: student_submissions
+-- Records a student's attempt to complete an exercise.
+CREATE TABLE IF NOT EXISTS `student_submissions` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `exercise_id` INT NOT NULL,
+    `student_id` INT NOT NULL,
+    `submitted_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `is_graded` BOOLEAN NOT NULL DEFAULT FALSE,
+    FOREIGN KEY (`exercise_id`) REFERENCES `exercises`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`student_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    UNIQUE KEY `unique_submission` (`exercise_id`, `student_id`) -- Assuming a student gets one submission per exercise
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Table: submission_answers
+-- Stores the student's specific answers for a submission.
+CREATE TABLE IF NOT EXISTS `submission_answers` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `submission_id` INT NOT NULL,
+    `question_id` INT NOT NULL,
+    `selected_option_id` INT NULL,
+    `open_ended_answer` TEXT NULL,
+    `assigned_score` DECIMAL(5, 2) NULL, -- Final score determined by the teacher
+    FOREIGN KEY (`submission_id`) REFERENCES `student_submissions`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`question_id`) REFERENCES `questions`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`selected_option_id`) REFERENCES `question_options`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

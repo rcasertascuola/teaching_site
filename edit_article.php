@@ -122,7 +122,6 @@ try {
                 <button type="submit">Save Changes</button>
             </form>
         </div>
-    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
     <script>

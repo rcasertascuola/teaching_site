@@ -6,7 +6,7 @@ on:
   # In questo caso, ogni volta che fai un "push" sul ramo "main"
   push:
     branches:
-      - initial-learning-platform
+      - article-revisions
 
 # Cosa deve fare il workflow?
 jobs:

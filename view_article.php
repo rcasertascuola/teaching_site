@@ -108,6 +108,7 @@ if (!$article_id || $article_id <= 0) {
                         $Parsedown->setSafeMode(true); // Sanitize user input
                         echo $Parsedown->text($article['content']);
                     ?>
+
                 </div>
             </div>
         <?php endif; ?>

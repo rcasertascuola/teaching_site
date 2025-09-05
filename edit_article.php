@@ -124,6 +124,7 @@ try {
         </div>
     </div>
 
+
     <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
     <script>
         const easyMDE = new EasyMDE({element: document.getElementById('content')});

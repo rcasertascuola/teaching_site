@@ -14,6 +14,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'];
     $role = $_POST['role'];
 
+    // Handle student-specific fields
+    $classe = ($role === 'student') ? trim($_POST['classe']) : null;
+    $anno_scolastico = ($role === 'student') ? trim($_POST['anno_scolastico']) : null;
+
     if (empty($username) || empty($email) || empty($password) || empty($role)) {
         $error_message = 'Please fill in all fields.';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -28,8 +32,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error_message = 'Username or email already taken.';
             } else {
                 $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-                $stmt = $pdo->prepare("INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)");
-                if ($stmt->execute([$username, $email, $hashed_password, $role])) {
+
+                $sql = "INSERT INTO users (username, email, password, role, classe, anno_scolastico) VALUES (?, ?, ?, ?, ?, ?)";
+                $stmt = $pdo->prepare($sql);
+
+                if ($stmt->execute([$username, $email, $hashed_password, $role, $classe, $anno_scolastico])) {
                     $_SESSION['success_message'] = 'Registration successful! Please log in.';
                     header('Location: login.php');
                     exit;
@@ -90,15 +97,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="form-group">
                 <label for="role">Register as:</label>
                 <select id="role" name="role" required>
-                    <option value="student">Student</option>
+                    <option value="student" selected>Student</option>
                     <option value="teacher">Teacher</option>
                 </select>
             </div>
+
+            <div id="student-fields">
+                <div class="form-group">
+                    <label for="classe">Class (e.g., 5A)</label>
+                    <input type="text" id="classe" name="classe">
+                </div>
+                <div class="form-group">
+                    <label for="anno_scolastico">School Year (e.g., 2023/2024)</label>
+                    <input type="text" id="anno_scolastico" name="anno_scolastico">
+                </div>
+            </div>
+
             <button type="submit">Register</button>
         </form>
         <p style="text-align: center; margin-top: 1rem;">
             Already have an account? <a href="login.php">Log in</a>
         </p>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const roleSelect = document.getElementById('role');
+            const studentFields = document.getElementById('student-fields');
+
+            function toggleStudentFields() {
+                if (roleSelect.value === 'student') {
+                    studentFields.style.display = 'block';
+                } else {
+                    studentFields.style.display = 'none';
+                }
+            }
+
+            // Initial check in case the browser remembers the selection
+            toggleStudentFields();
+
+            // Add event listener for changes
+            roleSelect.addEventListener('change', toggleStudentFields);
+        });
+    </script>
 </body>
 </html>

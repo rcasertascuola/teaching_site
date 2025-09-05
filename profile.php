@@ -18,6 +18,16 @@ $user_id = $_SESSION['user_id'];
 $username = $_SESSION['username'];
 $current_theme = getCurrentTheme($pdo);
 
+// Fetch all user details for display
+$user_data = null;
+try {
+    $stmt = $pdo->prepare("SELECT email, role, classe, anno_scolastico FROM users WHERE id = ?");
+    $stmt->execute([$user_id]);
+    $user_data = $stmt->fetch();
+} catch (PDOException $e) {
+    $message = '<div class="message error">Could not fetch user data.</div>';
+}
+
 // --- Handle Password Change Request ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
     $current_password = $_POST['current_password'];
@@ -71,7 +81,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
     </div>
 
     <div class="container">
-        <h1>Edit Profile</h1>
+        <h1>My Profile</h1>
+
+        <?php if ($user_data): ?>
+        <div class="profile-info" style="margin-bottom: 2rem; padding: 1rem; border: 1px solid #ddd; border-radius: 4px;">
+            <h2>Your Information</h2>
+            <p><strong>Username:</strong> <?php echo htmlspecialchars($username); ?></p>
+            <p><strong>Email:</strong> <?php echo htmlspecialchars($user_data['email']); ?></p>
+            <p><strong>Role:</strong> <?php echo ucfirst(htmlspecialchars($user_data['role'])); ?></p>
+            <?php if ($user_data['role'] === 'student'): ?>
+                <?php if (!empty($user_data['classe'])): ?>
+                    <p><strong>Class:</strong> <?php echo htmlspecialchars($user_data['classe']); ?></p>
+                <?php endif; ?>
+                <?php if (!empty($user_data['anno_scolastico'])): ?>
+                    <p><strong>School Year:</strong> <?php echo htmlspecialchars($user_data['anno_scolastico']); ?></p>
+                <?php endif; ?>
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
 
         <?php echo $message; ?>
 

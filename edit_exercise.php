@@ -169,6 +169,7 @@ try {
 
             <hr>
             <button type="submit">Save Changes</button>
+
             <button type="button" id="preview-btn" style="float: right;">Preview</button>
         </form>
 
@@ -177,11 +178,13 @@ try {
             <div id="preview-content"></div>
             <button type="button" id="close-preview-btn" style="margin-top: 1rem;">Close Preview</button>
         </div>
+
     </div>
 
 <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
 <script>
     const easyMDE = new EasyMDE({element: document.getElementById('content')});
+
 
     const previewBtn = document.getElementById('preview-btn');
     const closePreviewBtn = document.getElementById('close-preview-btn');
@@ -219,6 +222,7 @@ try {
         previewContainer.style.display = 'none';
         previewContent.innerHTML = '';
     });
+
 </script>
 </body>
 </html>

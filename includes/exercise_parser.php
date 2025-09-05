@@ -3,6 +3,7 @@
 class ExerciseParser {
 
     /**
+
      * Parses the wikitext of an exercise into a structured array of elements,
      * which can be either questions or content blocks.
      *
@@ -55,10 +56,12 @@ class ExerciseParser {
                     break;
                 case 'COMPLETAMENTO_TESTO':
                     $parsed_question = $this->parseClozeTest($question_text_without_tag);
+
                     break;
             }
 
             if ($parsed_question) {
+
                 $parsed_question['order'] = $question_order++;
                 $elements[] = ['type' => 'question', 'data' => $parsed_question];
             }
@@ -75,6 +78,7 @@ class ExerciseParser {
         }
 
         return $elements;
+
     }
 
     private function parseMultipleChoice(string $content, bool $is_multi_response): ?array {

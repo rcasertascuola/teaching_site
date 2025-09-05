@@ -85,14 +85,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
 // --- Fetch exercise data for viewing ---
+
 require_once 'includes/exercise_parser.php';
 require_once 'includes/Parsedown.php';
 
 try {
     $stmt = $pdo->prepare("SELECT title, content FROM exercises WHERE id = ?");
+
     $stmt->execute([$exercise_id]);
     $exercise = $stmt->fetch();
     if (!$exercise) throw new Exception("Exercise not found.");
+
 
     $parser = new ExerciseParser();
     $Parsedown = new Parsedown();
@@ -103,6 +106,7 @@ try {
     $stmt_q_ids = $pdo->prepare("SELECT id, question_order FROM questions WHERE exercise_id = ?");
     $stmt_q_ids->execute([$exercise_id]);
     $question_id_map = $stmt_q_ids->fetchAll(PDO::FETCH_KEY_PAIR);
+
 
 
 } catch (Exception $e) {
@@ -120,8 +124,10 @@ try {
     <title>Complete Exercise: <?php echo htmlspecialchars($exercise['title']); ?></title>
     <link rel="stylesheet" href="assets/css/<?php echo $current_theme; ?>-theme.css">
     <style>
+
         .question { margin-bottom: 2rem; border-top: 1px solid #eee; padding-top: 1.5rem; }
         .content-block { margin-bottom: 1.5rem; }
+
         .question p { font-weight: bold; }
         .options-list { list-style-type: none; padding-left: 0; }
         .options-list li { margin-bottom: 0.5rem; }
@@ -138,6 +144,7 @@ try {
         <?php echo $message; ?>
 
         <form action="view_exercise.php?id=<?php echo $exercise_id; ?>" method="POST">
+
             <?php foreach ($elements as $element): ?>
                 <?php if ($element['type'] === 'content'): ?>
                     <div class="content-block">
@@ -196,6 +203,7 @@ try {
                         <?php endif; ?>
                     </div>
                 <?php endif; ?>
+
             <?php endforeach; ?>
 
             <button type="submit">Submit Answers</button>

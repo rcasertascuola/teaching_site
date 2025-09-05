@@ -143,6 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <hr>
             <button type="submit">Create Exercise</button>
+
             <button type="button" id="preview-btn" style="float: right;">Preview</button>
         </form>
 
@@ -151,6 +152,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div id="preview-content"></div>
             <button type="button" id="close-preview-btn" style="margin-top: 1rem;">Close Preview</button>
         </div>
+
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
@@ -193,6 +195,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             previewContainer.style.display = 'none';
             previewContent.innerHTML = '';
         });
+
     </script>
 </body>
 </html>

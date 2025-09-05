@@ -91,6 +91,7 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Article</title>
     <link rel="stylesheet" href="assets/css/<?php echo $current_theme; ?>-theme.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
 </head>
 <body>
     <div class="navbar">
@@ -121,6 +122,10 @@ try {
                 <button type="submit">Save Changes</button>
             </form>
         </div>
-    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+    <script>
+        const easyMDE = new EasyMDE({element: document.getElementById('content')});
+    </script>
 </body>
 </html>

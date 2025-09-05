@@ -13,6 +13,7 @@ if (!isset($_SESSION['user_id'])) {
 // --- Includes ---
 require_once 'includes/db.php';
 require_once 'includes/theme_manager.php';
+require_once 'includes/Parsedown.php';
 
 // --- Logic ---
 $username = htmlspecialchars($_SESSION['username']);
@@ -102,6 +103,11 @@ if (!$article_id || $article_id <= 0) {
                     by <strong><?php echo htmlspecialchars($article['editor_name'] ?? 'Unknown'); ?></strong>
                 </div>
                 <div class="content-body">
+                    <?php
+                        $Parsedown = new Parsedown();
+                        $Parsedown->setSafeMode(true); // Sanitize user input
+                        echo $Parsedown->text($article['content']);
+                    ?>
                     <?php echo nl2br(htmlspecialchars($article['content'])); ?>
                 </div>
             </div>

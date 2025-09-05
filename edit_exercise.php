@@ -164,7 +164,7 @@ try {
 
             <div class="form-group required">
                 <label for="content">Exercise Content (Wikitext)</label>
-                <textarea id="content" name="content" rows="20" required><?php echo htmlspecialchars($exercise['content'] ?? ''); ?></textarea>
+                <textarea id="content" name="content" rows="20"><?php echo htmlspecialchars($exercise['content'] ?? ''); ?></textarea>
             </div>
 
             <hr>

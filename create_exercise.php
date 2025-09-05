@@ -138,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="form-group required">
                 <label for="content">Exercise Content (Wikitext)</label>
-                <textarea id="content" name="content" rows="20" required></textarea>
+                <textarea id="content" name="content" rows="20"></textarea>
             </div>
 
             <hr>

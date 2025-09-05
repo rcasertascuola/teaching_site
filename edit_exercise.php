@@ -169,12 +169,60 @@ try {
 
             <hr>
             <button type="submit">Save Changes</button>
+
+            <button type="button" id="preview-btn" style="float: right;">Preview</button>
         </form>
+
+        <div id="preview-container" style="display: none; margin-top: 2rem; border: 1px solid #ccc; padding: 1rem; background-color: #f9f9f9;">
+            <h2>Preview</h2>
+            <div id="preview-content"></div>
+            <button type="button" id="close-preview-btn" style="margin-top: 1rem;">Close Preview</button>
+        </div>
+
     </div>
 
 <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
 <script>
     const easyMDE = new EasyMDE({element: document.getElementById('content')});
+
+
+    const previewBtn = document.getElementById('preview-btn');
+    const closePreviewBtn = document.getElementById('close-preview-btn');
+    const previewContainer = document.getElementById('preview-container');
+    const previewContent = document.getElementById('preview-content');
+
+    previewBtn.addEventListener('click', () => {
+        const wikitext = easyMDE.value();
+
+        previewContent.innerHTML = 'Loading preview...';
+        previewContainer.style.display = 'block';
+
+        fetch('ajax_render_exercise.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'content=' + encodeURIComponent(wikitext)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.text();
+        })
+        .then(html => {
+            previewContent.innerHTML = html;
+        })
+        .catch(error => {
+            previewContent.innerHTML = '<p style="color: red;">Error loading preview: ' + error.message + '</p>';
+        });
+    });
+
+    closePreviewBtn.addEventListener('click', () => {
+        previewContainer.style.display = 'none';
+        previewContent.innerHTML = '';
+    });
+
 </script>
 </body>
 </html>

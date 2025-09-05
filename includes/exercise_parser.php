@@ -3,54 +3,82 @@
 class ExerciseParser {
 
     /**
-     * Parses the wikitext of an exercise into a structured array of questions.
+
+     * Parses the wikitext of an exercise into a structured array of elements,
+     * which can be either questions or content blocks.
      *
      * @param string $wikitext The raw text content of the exercise.
-     * @return array A structured array of questions.
+     * @return array A structured array of mixed content and question elements.
      */
     public function parse(string $wikitext): array {
-        $questions = [];
-        $question_blocks = preg_split(
-            '/(\[\[(DOMANDA|DOMANDA_MULTI-RISPOSTA|DOMANDA_APERTA|COMPLETAMENTO_TESTO)\]\])/',
+        $elements = [];
+        $question_order = 1;
+        $last_pos = 0;
+
+        // Find all question tags and their positions
+        preg_match_all(
+            '/\[\[(DOMANDA|DOMANDA_MULTI-RISPOSTA|DOMANDA_APERTA|COMPLETAMENTO_TESTO)\]\]/',
             $wikitext,
-            -1,
-            PREG_SPLIT_DELIM_CAPTURE
+            $matches,
+            PREG_OFFSET_CAPTURE
         );
 
-        // After splitting, the array has a consistent structure:
-        // The first element is any text before the first tag (can be empty).
-        // Then, it's a repeating sequence of [DELIMITER, CAPTURE, CONTENT].
-        // We start the loop at index 1 to process the first question block.
-        $order = 1;
-        for ($i = 1; $i < count($question_blocks); $i += 3) {
-            if (!isset($question_blocks[$i+1])) continue;
+        foreach ($matches[0] as $index => $match) {
+            $tag_full = $match[0]; // e.g., "[[DOMANDA]]"
+            $tag_start_pos = $match[1];
+            $tag_name = $matches[1][$index][0]; // e.g., "DOMANDA"
 
-            $tag = $question_blocks[$i+1]; // e.g., "DOMANDA"
-            $content = $question_blocks[$i+2] ?? ''; // The text content for this question
+            // 1. Capture interstitial content before the current tag
+            if ($tag_start_pos > $last_pos) {
+                $content_text = trim(substr($wikitext, $last_pos, $tag_start_pos - $last_pos));
+                if (!empty($content_text)) {
+                    $elements[] = ['type' => 'content', 'text' => $content_text];
+                }
+            }
+
+            // 2. Determine the content of the current question block
+            $next_tag_start_pos = $matches[0][$index + 1][1] ?? strlen($wikitext);
+            $question_block_content = substr($wikitext, $tag_start_pos, $next_tag_start_pos - $tag_start_pos);
+
+            // 3. Parse the question block
             $parsed_question = null;
+            $question_text_without_tag = substr($question_block_content, strlen($tag_full));
 
-            switch ($tag) {
+            switch ($tag_name) {
                 case 'DOMANDA':
-                    $parsed_question = $this->parseMultipleChoice($content, false);
+                    $parsed_question = $this->parseMultipleChoice($question_text_without_tag, false);
                     break;
                 case 'DOMANDA_MULTI-RISPOSTA':
-                    $parsed_question = $this->parseMultipleChoice($content, true);
+                    $parsed_question = $this->parseMultipleChoice($question_text_without_tag, true);
                     break;
                 case 'DOMANDA_APERTA':
-                    $parsed_question = $this->parseOpenEnded($content);
+                    $parsed_question = $this->parseOpenEnded($question_text_without_tag);
                     break;
                 case 'COMPLETAMENTO_TESTO':
-                    $parsed_question = $this->parseClozeTest($content);
+                    $parsed_question = $this->parseClozeTest($question_text_without_tag);
+
                     break;
             }
 
             if ($parsed_question) {
-                $parsed_question['order'] = $order++;
-                $questions[] = $parsed_question;
+
+                $parsed_question['order'] = $question_order++;
+                $elements[] = ['type' => 'question', 'data' => $parsed_question];
+            }
+
+            $last_pos = $next_tag_start_pos;
+        }
+
+        // 4. Capture any trailing content after the last question
+        if ($last_pos < strlen($wikitext)) {
+            $trailing_content = trim(substr($wikitext, $last_pos));
+            if (!empty($trailing_content)) {
+                $elements[] = ['type' => 'content', 'text' => $trailing_content];
             }
         }
 
-        return $questions;
+        return $elements;
+
     }
 
     private function parseMultipleChoice(string $content, bool $is_multi_response): ?array {

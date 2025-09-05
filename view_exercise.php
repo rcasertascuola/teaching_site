@@ -85,27 +85,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
 // --- Fetch exercise data for viewing ---
+
+require_once 'includes/exercise_parser.php';
+require_once 'includes/Parsedown.php';
+
 try {
-    $stmt = $pdo->prepare("SELECT title FROM exercises WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT title, content FROM exercises WHERE id = ?");
+
     $stmt->execute([$exercise_id]);
     $exercise = $stmt->fetch();
     if (!$exercise) throw new Exception("Exercise not found.");
 
-    $stmt_q = $pdo->prepare("SELECT * FROM questions WHERE exercise_id = ? ORDER BY question_order ASC");
-    $stmt_q->execute([$exercise_id]);
-    $questions = $stmt_q->fetchAll();
 
-    $stmt_o = $pdo->prepare("SELECT * FROM question_options WHERE question_id = ?");
+    $parser = new ExerciseParser();
+    $Parsedown = new Parsedown();
+    $elements = $parser->parse($exercise['content']);
 
-    foreach ($questions as $key => $q) {
-        if ($q['question_type'] === 'multiple_choice' || $q['question_type'] === 'multiple_response') {
-            $stmt_o->execute([$q['id']]);
-            $questions[$key]['options'] = $stmt_o->fetchAll();
-        }
-        if ($q['question_type'] === 'cloze_test' && $q['cloze_data']) {
-            $questions[$key]['cloze_data'] = json_decode($q['cloze_data'], true);
-        }
-    }
+    // We still need the question IDs for form submission, so we'll fetch them.
+    // A mapping from question order to question ID.
+    $stmt_q_ids = $pdo->prepare("SELECT id, question_order FROM questions WHERE exercise_id = ?");
+    $stmt_q_ids->execute([$exercise_id]);
+    $question_id_map = $stmt_q_ids->fetchAll(PDO::FETCH_KEY_PAIR);
+
+
+
 } catch (Exception $e) {
     $_SESSION['message'] = '<div class="message error">' . $e->getMessage() . '</div>';
     header('Location: student_dashboard.php');
@@ -121,7 +124,10 @@ try {
     <title>Complete Exercise: <?php echo htmlspecialchars($exercise['title']); ?></title>
     <link rel="stylesheet" href="assets/css/<?php echo $current_theme; ?>-theme.css">
     <style>
-        .question { margin-bottom: 2rem; border-bottom: 1px solid #eee; padding-bottom: 1.5rem; }
+
+        .question { margin-bottom: 2rem; border-top: 1px solid #eee; padding-top: 1.5rem; }
+        .content-block { margin-bottom: 1.5rem; }
+
         .question p { font-weight: bold; }
         .options-list { list-style-type: none; padding-left: 0; }
         .options-list li { margin-bottom: 0.5rem; }
@@ -138,49 +144,66 @@ try {
         <?php echo $message; ?>
 
         <form action="view_exercise.php?id=<?php echo $exercise_id; ?>" method="POST">
-            <?php foreach ($questions as $question): ?>
-                <div class="question">
-                    <p><strong><?php echo htmlspecialchars($question['question_order']) . '. ' . htmlspecialchars($question['question_text']); ?></strong> (<?php echo $question['points']; ?> points)</p>
 
-                    <?php if ($question['question_type'] === 'multiple_choice' || $question['question_type'] === 'multiple_response'): ?>
-                        <ul class="options-list">
-                            <?php foreach ($question['options'] as $option): ?>
-                                <li>
-                                    <label>
-                                        <?php if ($question['question_type'] === 'multiple_response'): ?>
-                                            <input type="checkbox" name="answers[<?php echo $question['id']; ?>][]" value="<?php echo $option['id']; ?>">
-                                        <?php else: ?>
-                                            <input type="radio" name="answers[<?php echo $question['id']; ?>]" value="<?php echo $option['id']; ?>" required>
-                                        <?php endif; ?>
-                                        <?php echo htmlspecialchars($option['option_text']); ?>
-                                    </label>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
-                    <?php elseif ($question['question_type'] === 'open_ended'): ?>
-                        <textarea name="answers[<?php echo $question['id']; ?>]" rows="5" style="width: 100%;"
-                                  <?php if ($question['char_limit']) echo 'maxlength="' . $question['char_limit'] . '"'; ?>
-                                  required></textarea>
-                        <?php if ($question['char_limit']): ?>
-                            <small>Max characters: <?php echo $question['char_limit']; ?></small>
+            <?php foreach ($elements as $element): ?>
+                <?php if ($element['type'] === 'content'): ?>
+                    <div class="content-block">
+                        <?php echo $Parsedown->text($element['text']); ?>
+                    </div>
+                <?php elseif ($element['type'] === 'question'):
+                    $q = $element['data'];
+                    $question_id = $question_id_map[$q['order']] ?? 0;
+                    if (!$question_id) continue; // Skip if question somehow not in DB
+                ?>
+                    <div class="question">
+                        <p><strong><?php echo htmlspecialchars($q['order']) . '. ' . htmlspecialchars($q['text']); ?></strong> (<?php echo $q['points']; ?> points)</p>
+
+                        <?php if ($q['type'] === 'multiple_choice' || $q['type'] === 'multiple_response'): ?>
+                            <ul class="options-list">
+                                <?php
+                                // We need option IDs for submission. We have to fetch them.
+                                $stmt_opts = $pdo->prepare("SELECT id, option_text FROM question_options WHERE question_id = ?");
+                                $stmt_opts->execute([$question_id]);
+                                $options = $stmt_opts->fetchAll();
+                                foreach ($options as $option): ?>
+                                    <li>
+                                        <label>
+                                            <?php if ($q['type'] === 'multiple_response'): ?>
+                                                <input type="checkbox" name="answers[<?php echo $question_id; ?>][]" value="<?php echo $option['id']; ?>">
+                                            <?php else: ?>
+                                                <input type="radio" name="answers[<?php echo $question_id; ?>]" value="<?php echo $option['id']; ?>" required>
+                                            <?php endif; ?>
+                                            <?php echo htmlspecialchars($option['option_text']); ?>
+                                        </label>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        <?php elseif ($q['type'] === 'open_ended'): ?>
+                            <textarea name="answers[<?php echo $question_id; ?>]" rows="5" style="width: 100%;"
+                                      <?php if ($q['char_limit']) echo 'maxlength="' . $q['char_limit'] . '"'; ?>
+                                      required></textarea>
+                            <?php if ($q['char_limit']): ?>
+                                <small>Max characters: <?php echo $q['char_limit']; ?></small>
+                            <?php endif; ?>
+
+                        <?php elseif ($q['type'] === 'cloze_test'): ?>
+                            <div class="cloze-word-list">
+                                <strong>Word List:</strong> <?php echo implode(', ', array_map('htmlspecialchars', $q['cloze_data']['word_list'])); ?>
+                            </div>
+                            <div class="cloze-inputs">
+                                <?php
+                                $num_blanks = count($q['cloze_data']['solution']);
+                                for ($i = 1; $i <= $num_blanks; $i++): ?>
+                                    <div class="form-group">
+                                        <label for="cloze_<?php echo $question_id; ?>_<?php echo $i; ?>">Blank [<?php echo $i; ?>]:</label>
+                                        <input type="text" id="cloze_<?php echo $question_id; ?>_<?php echo $i; ?>" name="answers[<?php echo $question_id; ?>][<?php echo $i; ?>]" required>
+                                    </div>
+                                <?php endfor; ?>
+                            </div>
                         <?php endif; ?>
+                    </div>
+                <?php endif; ?>
 
-                    <?php elseif ($question['question_type'] === 'cloze_test'): ?>
-                        <div class="cloze-word-list">
-                            <strong>Word List:</strong> <?php echo implode(', ', array_map('htmlspecialchars', $question['cloze_data']['word_list'])); ?>
-                        </div>
-                        <div class="cloze-inputs">
-                            <?php
-                            $num_blanks = count($question['cloze_data']['solution']);
-                            for ($i = 1; $i <= $num_blanks; $i++): ?>
-                                <div class="form-group">
-                                    <label for="cloze_<?php echo $question['id']; ?>_<?php echo $i; ?>">Blank [<?php echo $i; ?>]:</label>
-                                    <input type="text" id="cloze_<?php echo $question['id']; ?>_<?php echo $i; ?>" name="answers[<?php echo $question['id']; ?>][<?php echo $i; ?>]" required>
-                                </div>
-                            <?php endfor; ?>
-                        </div>
-                    <?php endif; ?>
-                </div>
             <?php endforeach; ?>
 
             <button type="submit">Submit Answers</button>

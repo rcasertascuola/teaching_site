@@ -81,3 +81,9 @@ hr {
     border-top: 1px solid #eee;
     margin: 2rem 0;
 }
+
+/* --- Fix for EasyMDE Toolbar Icons --- */
+/* Override the default button color for the markdown editor to ensure icons are visible. */
+.editor-toolbar button {
+    color: #333 !important; /* Use !important to ensure override */
+}

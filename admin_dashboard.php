@@ -90,6 +90,30 @@ try {
         .btn-edit { background-color: #ffc107; }
         .btn-delete { background-color: #dc3545; }
         .btn-history { background-color: #17a2b8; }
+
+        .features-menu {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #dee2e6;
+            padding-bottom: 1rem;
+        }
+        .features-menu a {
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px 5px 0 0;
+            color: #495057;
+            font-weight: 500;
+        }
+        .features-menu a.active {
+            border-bottom: 2px solid #007bff;
+            color: #007bff;
+        }
+        .features-menu a.disabled {
+            color: #6c757d;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -112,6 +136,14 @@ try {
 
     <div class="container">
         <h1>Teacher Dashboard</h1>
+
+        <div class="features-menu">
+            <a href="admin_dashboard.php" class="active">Articoli</a>
+            <a href="#" class="disabled" title="Prossimamente">Esercizi</a>
+            <a href="#" class="disabled" title="Prossimamente">Obiettivi formativi</a>
+            <a href="#" class="disabled" title="Prossimamente">Riscontro alunni</a>
+            <a href="#" class="disabled" title="Prossimamente">Valutazioni</a>
+        </div>
 
         <?php
         // Display session messages if they exist

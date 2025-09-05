@@ -83,7 +83,15 @@ hr {
 }
 
 /* --- Fix for EasyMDE Toolbar Icons --- */
-/* Override the default button color for the markdown editor to ensure icons are visible. */
+/* Override default styles for the markdown editor to ensure toolbar is visible in the light theme. */
 .editor-toolbar button {
-    color: #333 !important; /* Use !important to ensure override */
+    color: #333 !important; /* Ensure icons are dark */
+    background-color: #f0f0f0; /* Make button background visible */
+    border: 1px solid #ccc;
+}
+
+.editor-toolbar button:hover,
+.editor-toolbar button.active {
+    background-color: #e0e0e0;
+    border-color: #bbb;
 }

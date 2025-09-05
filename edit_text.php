@@ -72,6 +72,13 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Text</title>
     <link rel="stylesheet" href="assets/css/<?php echo $current_theme; ?>-theme.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+    <style>
+        /* Fix for EasyMDE icon visibility on light theme */
+        .editor-toolbar a {
+            color: #333 !important; /* Override theme styles for toolbar icons */
+        }
+    </style>
 </head>
 <body>
     <div class="navbar">
@@ -99,5 +106,10 @@ try {
             </form>
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+    <script>
+        const easyMDE = new EasyMDE({element: document.getElementById('content')});
+    </script>
 </body>
 </html>

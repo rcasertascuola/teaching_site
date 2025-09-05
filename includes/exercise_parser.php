@@ -14,15 +14,19 @@ class ExerciseParser {
             '/(\[\[(DOMANDA|DOMANDA_MULTI-RISPOSTA|DOMANDA_APERTA|COMPLETAMENTO_TESTO)\]\])/',
             $wikitext,
             -1,
-            PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE
+            PREG_SPLIT_DELIM_CAPTURE
         );
 
+        // After splitting, the array has a consistent structure:
+        // The first element is any text before the first tag (can be empty).
+        // Then, it's a repeating sequence of [DELIMITER, CAPTURE, CONTENT].
+        // We start the loop at index 1 to process the first question block.
         $order = 1;
-        for ($i = 0; $i < count($question_blocks); $i += 3) {
+        for ($i = 1; $i < count($question_blocks); $i += 3) {
             if (!isset($question_blocks[$i+1])) continue;
 
-            $tag = $question_blocks[$i+1];
-            $content = $question_blocks[$i+2] ?? '';
+            $tag = $question_blocks[$i+1]; // e.g., "DOMANDA"
+            $content = $question_blocks[$i+2] ?? ''; // The text content for this question
             $parsed_question = null;
 
             switch ($tag) {

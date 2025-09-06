@@ -219,6 +219,7 @@ $next_year = date('Y', strtotime('+1 month'));
                             <button id="now" title="Go to Now">Now</button>
                             <button id="next-hour" title="Next Hour">▶️</button>
                             <button id="next-day" title="Next Day">⏩</button>
+
                         </div>
                     </div>
                 </div>
@@ -230,13 +231,16 @@ $next_year = date('Y', strtotime('+1 month'));
                         <a href="manage_schedule.php">Manage Schedule</a>
                         <a href="manage_appointments.php">Manage Appointments</a>
                         <a href="manage_exercises.php">Manage Exercises</a>
+
                         <a href="manage_articles.php">Manage Articles</a>
+
                         <a href="manage_users.php">Manage Users</a>
                         <a href="#" class="disabled">Grades</a>
                     </div>
                 </div>
             </div>
         </div>
+
 
     </div>
 
@@ -309,10 +313,12 @@ $next_year = date('Y', strtotime('+1 month'));
                 displayedDate.setDate(displayedDate.getDate() + 1);
                 fetchLesson(displayedDate);
             });
+
             document.getElementById('now').addEventListener('click', () => {
                 displayedDate = new Date(); // Reset to current time
                 fetchLesson(displayedDate);
             });
+
         });
     </script>
 </body>

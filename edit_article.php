@@ -127,7 +127,17 @@ try {
 
     <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
     <script>
-        const easyMDE = new EasyMDE({element: document.getElementById('content')});
+        const easyMDE = new EasyMDE({
+            element: document.getElementById('content'),
+            toolbar: [
+                "bold", "italic", "strikethrough", "|",
+                "heading-1", "heading-2", "heading-3", "|",
+                "code", "quote", "unordered-list", "ordered-list", "|",
+                "link", "image", "table", "horizontal-rule", "|",
+                "preview", "side-by-side", "fullscreen", "|",
+                "guide"
+            ]
+        });
     </script>
 </body>
 </html>

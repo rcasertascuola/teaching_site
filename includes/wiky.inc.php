@@ -5,11 +5,9 @@
  * Code usage under any of these licenses:
  * Apache License 2.0, http://www.apache.org/licenses/LICENSE-2.0
  * Mozilla Public License 1.1, http://www.mozilla.org/MPL/1.1/
- * GNU Lesser General Public License 3.0, http://www.gnu.org/licenses/lgpl-3.0.h
-tml
+ * GNU Lesser General Public License 3.0, http://www.gnu.org/licenses/lgpl-3.0.html
  * GNU General Public License 2.0, http://www.gnu.org/licenses/gpl-2.0.html
- * Creative Commons Attribution 3.0 Unported License, http://creativecommons.org
-/licenses/by/3.0/
+ * Creative Commons Attribution 3.0 Unported License, http://creativecommons.org/licenses/by/3.0/
  */
 
 class wiky {
@@ -38,8 +36,8 @@ class wiky {
                         // Special
                         "/^----+(\s*)$/m",
 // Horizontal line
-                        "/\[\[(file|img):((ht|f)tp(s?):\/\/(.+?))( (.+))*\]\]/i"
-,       // (File|img):(http|https|ftp) aka image
+                        "/\[\[(file|img):((ht|f)tp(s?):\/\/(.+?))( (.+))*\]\]/i",
+// (File|img):(http|https|ftp) aka image
                         "/\[((news|(ht|f)tp(s?)|irc):\/\/(.+?))( (.+))\]/i",
 // Other urls with text
                         "/\[((news|(ht|f)tp(s?)|irc):\/\/(.+?))\]/i",
@@ -78,12 +76,9 @@ class wiky {
                         // List items
                         "/^[#\*]+ *(.+)$/m",
 // Wraps all list items to <li/>
-
-                        // Newlines (TODO: make it smarter and so that it groupd
- paragraphs)
-                        "/^(?!<li|dd).+(?=(<a|strong|em|img)).+$/mi",
-// Ones with breakable elements (TODO: Fix this crap, the li|dd comparison here
-is just stupid)
+                        // Newlines (TODO: make it smarter and so that it groupd paragraphs)
+                        '/^(?!<li|dd).+(?=(<a|strong|em|img)).+$/mi',
+// Ones with breakable elements (TODO: Fix this crap, the li|dd comparison here is just stupid)
                         "/^[^><\n\r]+$/m",
 // Ones with no elements
                 );
@@ -107,8 +102,7 @@ is just stupid)
                         "<a href=\"$1\">$1</a>",
 
                         // Indentations
-                        "\n<dl>$0\n</dl>", // Newline is here to make the second
- pass easier
+                        "\n<dl>$0\n</dl>", // Newline is here to make the second pass easier
                         "<dd>$1</dd>",
                         "\n<dd><dl>$0\n</dl></dd>",
                         "<dd>$1</dd>",
@@ -140,8 +134,7 @@ is just stupid)
         }
         public function parse($input) {
                 if(!empty($input))
-                        $output=preg_replace($this->patterns,$this->replacements
-,$input);
+                        $output=preg_replace($this->patterns,$this->replacements,$input);
                 else
                         $output=false;
                 return $output;

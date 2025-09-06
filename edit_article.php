@@ -136,7 +136,27 @@ try {
                 "link", "image", "table", "horizontal-rule", "|",
                 "preview", "side-by-side", "fullscreen", "|",
                 "guide"
-            ]
+            ],
+            previewRender: (plainText, preview) => {
+                // Use a debounce mechanism to avoid sending too many requests
+                clearTimeout(window.previewTimeout);
+                window.previewTimeout = setTimeout(() => {
+                    fetch('ajax_render_article.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: 'content=' + encodeURIComponent(plainText)
+                    })
+                    .then(response => response.text())
+                    .then(html => {
+                        preview.innerHTML = html;
+                    })
+                    .catch(error => {
+                        preview.innerHTML = '<p style="color: red;">Error loading preview: ' + error.message + '</p>';
+                    });
+                }, 300);
+
+                return "Loading preview..."; // Return a placeholder
+            }
         });
     </script>
 </body>

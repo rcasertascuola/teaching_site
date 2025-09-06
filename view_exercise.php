@@ -161,7 +161,9 @@ try {
                     }
                 ?>
                     <div class="question">
+
                         <p><strong><?php echo htmlspecialchars($q['order']) . '. ' . $question_text_html; ?></strong> (<?php echo $q['points']; ?> points)</p>
+
 
                         <?php if ($q['type'] === 'multiple_choice' || $q['type'] === 'multiple_response'): ?>
                             <ul class="options-list">
@@ -183,7 +185,9 @@ try {
                                             <?php else: ?>
                                                 <input type="radio" name="answers[<?php echo $question_id; ?>]" value="<?php echo $option['id']; ?>" required>
                                             <?php endif; ?>
+
                                             <?php echo $option_text_html; ?>
+
                                         </label>
                                     </li>
                                 <?php endforeach; ?>
@@ -198,7 +202,9 @@ try {
 
                         <?php elseif ($q['type'] === 'cloze_test'): ?>
                             <div class="cloze-text">
+
                                 <?php echo $wiky->parse(htmlspecialchars($q['text'])); ?>
+
                             </div>
                             <div class="cloze-word-list" style="margin-top: 1rem;">
                                 <strong>Word List:</strong> <?php echo implode(', ', array_map('htmlspecialchars', $q['cloze_data']['word_list'])); ?>

@@ -46,6 +46,7 @@ foreach ($elements as $element) {
     } elseif ($element['type'] === 'question') {
         $q = $element['data'];
         echo '<div class="question-preview">';
+
         // For inline content, we parse the text but wrap it in a way that prevents block elements.
         // Since wiky.php doesn't have a dedicated "line" method, we'll parse and then strip potential <p> tags.
         $question_text_html = trim($wiky->parse(htmlspecialchars($q['text'])));
@@ -53,6 +54,7 @@ foreach ($elements as $element) {
             $question_text_html = substr($question_text_html, 3, -4);
         }
         echo '<p><strong>' . htmlspecialchars($q['order']) . '. ' . $question_text_html . '</strong> (' . htmlspecialchars($q['points']) . ' points)</p>';
+
 
         switch ($q['type']) {
             case 'multiple_choice':
@@ -65,7 +67,9 @@ foreach ($elements as $element) {
                     }
                     $icon = $q['type'] === 'multiple_choice' ? '&#9675;' : '&#9744;'; // Circle or Checkbox
                     $style = $opt['is_correct'] ? 'color: green; font-weight: bold;' : '';
+
                     echo '<li style="' . $style . '">' . $icon . ' ' . $option_text_html . '</li>';
+
                 }
                 echo '</ul>';
                 break;

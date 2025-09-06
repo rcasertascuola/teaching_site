@@ -162,7 +162,6 @@ try {
                 ?>
                     <div class="question">
                         <p><strong><?php echo htmlspecialchars($q['order']) . '. ' . $question_text_html; ?></strong> (<?php echo $q['points']; ?> points)</p>
-
                         <?php if ($q['type'] === 'multiple_choice' || $q['type'] === 'multiple_response'): ?>
                             <ul class="options-list">
                                 <?php

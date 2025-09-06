@@ -113,7 +113,7 @@ try {
                 </div>
                 <div class="form-group">
                     <label for="content">Content</label>
-                    <textarea id="content" name="content" rows="15" required><?php echo htmlspecialchars($article['content']); ?></textarea>
+                    <textarea id="content" name="content" rows="15" required><?php echo $article['content']; ?></textarea>
                 </div>
                 <div class="form-group">
                     <label for="edit_summary">Edit Summary (briefly describe your changes)</label>

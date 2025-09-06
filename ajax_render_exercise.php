@@ -53,7 +53,6 @@ foreach ($elements as $element) {
             $question_text_html = substr($question_text_html, 3, -4);
         }
         echo '<p><strong>' . htmlspecialchars($q['order']) . '. ' . $question_text_html . '</strong> (' . htmlspecialchars($q['points']) . ' points)</p>';
-
         switch ($q['type']) {
             case 'multiple_choice':
             case 'multiple_response':

@@ -13,7 +13,7 @@ if (!isset($_SESSION['user_id'])) {
 // --- Includes ---
 require_once 'includes/db.php';
 require_once 'includes/theme_manager.php';
-require_once 'includes/Parsedown.php';
+require_once 'includes/wiky.inc.php';
 
 // --- Logic ---
 $username = htmlspecialchars($_SESSION['username']);
@@ -104,11 +104,11 @@ if (!$article_id || $article_id <= 0) {
                 </div>
                 <div class="content-body">
                     <?php
-                        $Parsedown = new Parsedown();
-                        $Parsedown->setSafeMode(true); // Sanitize user input
-                        echo $Parsedown->text($article['content']);
+                        $wiky = new wiky();
+                        // It's recommended by the Wiky.php author to escape HTML characters before parsing
+                        $safe_content = htmlspecialchars($article['content'], ENT_QUOTES, 'UTF-8');
+                        echo $wiky->parse($safe_content);
                     ?>
-
                 </div>
             </div>
         <?php endif; ?>

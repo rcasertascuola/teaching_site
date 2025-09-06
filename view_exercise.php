@@ -156,7 +156,7 @@ try {
                     if (!$question_id) continue; // Skip if question somehow not in DB
                 ?>
                     <div class="question">
-                        <p><strong><?php echo htmlspecialchars($q['order']) . '. ' . htmlspecialchars($q['text']); ?></strong> (<?php echo $q['points']; ?> points)</p>
+                        <p><strong><?php echo htmlspecialchars($q['order']) . '. ' . $Parsedown->line($q['text']); ?></strong> (<?php echo $q['points']; ?> points)</p>
 
                         <?php if ($q['type'] === 'multiple_choice' || $q['type'] === 'multiple_response'): ?>
                             <ul class="options-list">
@@ -173,7 +173,7 @@ try {
                                             <?php else: ?>
                                                 <input type="radio" name="answers[<?php echo $question_id; ?>]" value="<?php echo $option['id']; ?>" required>
                                             <?php endif; ?>
-                                            <?php echo htmlspecialchars($option['option_text']); ?>
+                                            <?php echo $Parsedown->line($option['option_text']); ?>
                                         </label>
                                     </li>
                                 <?php endforeach; ?>
@@ -187,10 +187,13 @@ try {
                             <?php endif; ?>
 
                         <?php elseif ($q['type'] === 'cloze_test'): ?>
-                            <div class="cloze-word-list">
+                            <div class="cloze-text">
+                                <?php echo $Parsedown->text($q['text']); ?>
+                            </div>
+                            <div class="cloze-word-list" style="margin-top: 1rem;">
                                 <strong>Word List:</strong> <?php echo implode(', ', array_map('htmlspecialchars', $q['cloze_data']['word_list'])); ?>
                             </div>
-                            <div class="cloze-inputs">
+                            <div class="cloze-inputs" style="margin-top: 1rem;">
                                 <?php
                                 $num_blanks = count($q['cloze_data']['solution']);
                                 for ($i = 1; $i <= $num_blanks; $i++): ?>

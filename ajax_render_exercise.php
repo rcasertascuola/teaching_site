@@ -46,7 +46,7 @@ foreach ($elements as $element) {
     } elseif ($element['type'] === 'question') {
         $q = $element['data'];
         echo '<div class="question-preview">';
-        echo '<p><strong>' . htmlspecialchars($q['order']) . '. ' . htmlspecialchars($q['text']) . '</strong> (' . htmlspecialchars($q['points']) . ' points)</p>';
+        echo '<p><strong>' . htmlspecialchars($q['order']) . '. ' . $Parsedown->line($q['text']) . '</strong> (' . htmlspecialchars($q['points']) . ' points)</p>';
 
         switch ($q['type']) {
             case 'multiple_choice':
@@ -55,7 +55,7 @@ foreach ($elements as $element) {
                 foreach ($q['options'] as $opt) {
                     $icon = $q['type'] === 'multiple_choice' ? '&#9675;' : '&#9744;'; // Circle or Checkbox
                     $style = $opt['is_correct'] ? 'color: green; font-weight: bold;' : '';
-                    echo '<li style="' . $style . '">' . $icon . ' ' . htmlspecialchars($opt['text']) . '</li>';
+                    echo '<li style="' . $style . '">' . $icon . ' ' . $Parsedown->line($opt['text']) . '</li>';
                 }
                 echo '</ul>';
                 break;

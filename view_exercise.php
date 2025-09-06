@@ -87,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // --- Fetch exercise data for viewing ---
 
 require_once 'includes/exercise_parser.php';
-require_once 'includes/Parsedown.php';
+require_once 'includes/wiky.inc.php';
 
 try {
     $stmt = $pdo->prepare("SELECT title, content FROM exercises WHERE id = ?");
@@ -98,7 +98,7 @@ try {
 
 
     $parser = new ExerciseParser();
-    $Parsedown = new Parsedown();
+    $wiky = new wiky();
     $elements = $parser->parse($exercise['content']);
 
     // We still need the question IDs for form submission, so we'll fetch them.
@@ -148,15 +148,22 @@ try {
             <?php foreach ($elements as $element): ?>
                 <?php if ($element['type'] === 'content'): ?>
                     <div class="content-block">
-                        <?php echo $Parsedown->text($element['text']); ?>
+                        <?php echo $wiky->parse(htmlspecialchars($element['text'])); ?>
                     </div>
                 <?php elseif ($element['type'] === 'question'):
                     $q = $element['data'];
                     $question_id = $question_id_map[$q['order']] ?? 0;
                     if (!$question_id) continue; // Skip if question somehow not in DB
+
+                    $question_text_html = trim($wiky->parse(htmlspecialchars($q['text'])));
+                    if (substr($question_text_html, 0, 3) === '<p>') {
+                        $question_text_html = substr($question_text_html, 3, -4);
+                    }
                 ?>
                     <div class="question">
-                        <p><strong><?php echo htmlspecialchars($q['order']) . '. ' . $Parsedown->line($q['text']); ?></strong> (<?php echo $q['points']; ?> points)</p>
+
+                        <p><strong><?php echo htmlspecialchars($q['order']) . '. ' . $question_text_html; ?></strong> (<?php echo $q['points']; ?> points)</p>
+
 
                         <?php if ($q['type'] === 'multiple_choice' || $q['type'] === 'multiple_response'): ?>
                             <ul class="options-list">
@@ -165,7 +172,12 @@ try {
                                 $stmt_opts = $pdo->prepare("SELECT id, option_text FROM question_options WHERE question_id = ?");
                                 $stmt_opts->execute([$question_id]);
                                 $options = $stmt_opts->fetchAll();
-                                foreach ($options as $option): ?>
+                                foreach ($options as $option):
+                                    $option_text_html = trim($wiky->parse(htmlspecialchars($option['option_text'])));
+                                     if (substr($option_text_html, 0, 3) === '<p>') {
+                                        $option_text_html = substr($option_text_html, 3, -4);
+                                    }
+                                ?>
                                     <li>
                                         <label>
                                             <?php if ($q['type'] === 'multiple_response'): ?>
@@ -173,7 +185,9 @@ try {
                                             <?php else: ?>
                                                 <input type="radio" name="answers[<?php echo $question_id; ?>]" value="<?php echo $option['id']; ?>" required>
                                             <?php endif; ?>
-                                            <?php echo $Parsedown->line($option['option_text']); ?>
+
+                                            <?php echo $option_text_html; ?>
+
                                         </label>
                                     </li>
                                 <?php endforeach; ?>
@@ -188,7 +202,9 @@ try {
 
                         <?php elseif ($q['type'] === 'cloze_test'): ?>
                             <div class="cloze-text">
-                                <?php echo $Parsedown->text($q['text']); ?>
+
+                                <?php echo $wiky->parse(htmlspecialchars($q['text'])); ?>
+
                             </div>
                             <div class="cloze-word-list" style="margin-top: 1rem;">
                                 <strong>Word List:</strong> <?php echo implode(', ', array_map('htmlspecialchars', $q['cloze_data']['word_list'])); ?>

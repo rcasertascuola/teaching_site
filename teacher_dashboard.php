@@ -21,37 +21,6 @@ $user_id = $_SESSION['user_id'];
 $current_theme = getCurrentTheme($pdo);
 $message = '';
 
-// Handle form submission for adding a new article
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_text'])) {
-    $title = trim($_POST['title']);
-    $content = trim($_POST['content']);
-    if (empty($title) || empty($content)) {
-        $message = '<div class="message error">Title and content cannot be empty.</div>';
-    } else {
-        $pdo->beginTransaction();
-        try {
-            $stmt = $pdo->prepare("INSERT INTO articles (title, creator_id) VALUES (?, ?)");
-            $stmt->execute([$title, $user_id]);
-            $article_id = $pdo->lastInsertId();
-            $stmt = $pdo->prepare("INSERT INTO revisions (article_id, editor_id, content, edit_summary) VALUES (?, ?, ?, ?)");
-            $stmt->execute([$article_id, $user_id, $content, 'Initial creation']);
-            $pdo->commit();
-            $message = '<div class="message success">Article added successfully!</div>';
-        } catch (PDOException $e) {
-            $pdo->rollBack();
-            $message = '<div class="message error">Database error: ' . $e->getMessage() . '</div>';
-        }
-    }
-}
-
-// Fetch all articles
-try {
-    $stmt = $pdo->query("SELECT id, title, created_at FROM articles ORDER BY created_at DESC");
-    $articles = $stmt->fetchAll();
-} catch (PDOException $e) {
-    $articles = [];
-    $message .= '<div class="message error">Could not fetch articles: ' . $e->getMessage() . '</div>';
-}
 
 // Fetch appointments for calendar
 $stmt = $pdo->prepare("SELECT * FROM calendar_appointments WHERE teacher_id = ? OR teacher_id IS NULL");
@@ -245,10 +214,12 @@ $next_year = date('Y', strtotime('+1 month'));
                             <?php endif; ?>
                         </div>
                         <div class="lesson-nav">
-                            <button id="prev-hour">&lt; Hour</button>
-                            <button id="prev-day">&lt; Day</button>
-                            <button id="next-day">Day &gt;</button>
-                            <button id="next-hour">Hour &gt;</button>
+                            <button id="prev-day" title="Previous Day">⏪</button>
+                            <button id="prev-hour" title="Previous Hour">◀️</button>
+                            <button id="now" title="Go to Now">Now</button>
+                            <button id="next-hour" title="Next Hour">▶️</button>
+                            <button id="next-day" title="Next Day">⏩</button>
+
                         </div>
                     </div>
                 </div>
@@ -260,7 +231,9 @@ $next_year = date('Y', strtotime('+1 month'));
                         <a href="manage_schedule.php">Manage Schedule</a>
                         <a href="manage_appointments.php">Manage Appointments</a>
                         <a href="manage_exercises.php">Manage Exercises</a>
-                        <a href="#manage-articles">Manage Articles</a>
+
+                        <a href="manage_articles.php">Manage Articles</a>
+
                         <a href="manage_users.php">Manage Users</a>
                         <a href="#" class="disabled">Grades</a>
                     </div>
@@ -268,55 +241,7 @@ $next_year = date('Y', strtotime('+1 month'));
             </div>
         </div>
 
-        <hr style="margin: 2rem 0;">
 
-        <!-- Article Management Section -->
-        <div id="manage-articles">
-            <div class="features-menu">
-                <a href="#manage-articles" class="active">Articoli</a>
-                <a href="manage_exercises.php">Esercizi</a>
-                <a href="#" class="disabled" title="Prossimamente">Obiettivi formativi</a>
-                <a href="#" class="disabled" title="Prossimamente">Riscontro alunni</a>
-                <a href="#" class="disabled" title="Prossimamente">Valutazioni</a>
-            </div>
-
-            <?php if (isset($_SESSION['message'])) { echo $_SESSION['message']; unset($_SESSION['message']); } echo $message; ?>
-
-            <div class="form-container">
-                <h2>Add New Article</h2>
-                <form action="teacher_dashboard.php" method="POST">
-                    <input type="hidden" name="add_text" value="1">
-                    <div class="form-group"><label for="title">Title</label><input type="text" id="title" name="title" required></div>
-                    <div class="form-group"><label for="content">Content</label><textarea id="content" name="content" required></textarea></div>
-                    <button type="submit" name="add_text">Add Article</button>
-                </form>
-            </div>
-
-            <hr>
-
-            <h2>Existing Articles</h2>
-            <div class="text-list-container">
-                <?php if (empty($articles)): ?>
-                    <p>No articles have been added yet.</p>
-                <?php else: ?>
-                    <ul class="text-list">
-                        <?php foreach ($articles as $article): ?>
-                            <li>
-                                <div class="text-info">
-                                    <a href="view_article.php?id=<?php echo $article['id']; ?>"><?php echo htmlspecialchars($article['title']); ?></a>
-                                    <small>Added: <?php echo date('Y-m-d', strtotime($article['created_at'])); ?></small>
-                                </div>
-                                <div class="text-actions">
-                                    <a href="history.php?id=<?php echo $article['id']; ?>" class="btn-history" style="background-color: #17a2b8; color: white;">History</a>
-                                    <a href="edit_article.php?id=<?php echo $article['id']; ?>" class="btn-edit">Edit</a>
-                                    <a href="delete_article.php?id=<?php echo $article['id']; ?>" class="btn-delete" onclick="return confirm('Are you sure?');">Delete</a>
-                                </div>
-                            </li>
-                        <?php endforeach; ?>
-                    </ul>
-                <?php endif; ?>
-            </div>
-        </div>
     </div>
 
     <script>
@@ -388,6 +313,12 @@ $next_year = date('Y', strtotime('+1 month'));
                 displayedDate.setDate(displayedDate.getDate() + 1);
                 fetchLesson(displayedDate);
             });
+
+            document.getElementById('now').addEventListener('click', () => {
+                displayedDate = new Date(); // Reset to current time
+                fetchLesson(displayedDate);
+            });
+
         });
     </script>
 </body>

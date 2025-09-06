@@ -121,3 +121,31 @@ CREATE TABLE IF NOT EXISTS `submission_answers` (
     FOREIGN KEY (`question_id`) REFERENCES `questions`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`selected_option_id`) REFERENCES `question_options`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- SECTION: Teacher Dashboard --
+
+-- Table: school_schedule
+-- Stores the weekly school schedule for each class and teacher.
+CREATE TABLE IF NOT EXISTS `school_schedule` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `teacher_id` INT NOT NULL,
+    `class` VARCHAR(50) NOT NULL,
+    `day_of_week` TINYINT NOT NULL, -- 1 for Monday, 2 for Tuesday, etc.
+    `start_time` TIME NOT NULL,
+    `end_time` TIME NOT NULL,
+    `subject` VARCHAR(100) NOT NULL,
+    FOREIGN KEY (`teacher_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Table: calendar_appointments
+-- Stores appointments, holidays, and other events for the calendar.
+CREATE TABLE IF NOT EXISTS `calendar_appointments` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `teacher_id` INT, -- NULL if it's a general school event/holiday
+    `title` VARCHAR(255) NOT NULL,
+    `description` TEXT,
+    `start_date` DATETIME NOT NULL,
+    `end_date` DATETIME NOT NULL,
+    `type` ENUM('appointment', 'holiday', 'event') NOT NULL,
+    FOREIGN KEY (`teacher_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
